@@ -26,22 +26,40 @@
    * Encrypt or decrypt a string with the given XOR key.
    *
    * @name xorCrypt
-   * @param {string} str - The string to encrypt.
-   * @param {int} [key=6] - The XOR key to use when encrypting.
+   * @param {string,buffer} str - The string to encrypt.
+   * @param {int,string,buffer} [key=6] - The XOR key to use when encrypting.
    *
    * @return The resulting XOR'ed string.
    */
-  return function xorCrypt (str, key) {
-    var output = ''
-
+  return function xorCrypt (data, key) {
     if (!key) {
       key = 6
     }
 
-    for (var i = 0; i < str.length; ++i) {
-      output += String.fromCharCode(key ^ str.charCodeAt(i))
+    let oldKey
+
+    if (typeof key === 'number') { // backwards compatiblity
+      oldKey = true
     }
 
-    return output
+    if (typeof key === 'string') {
+      key = Buffer.from(key)
+    }
+
+    if (typeof data === 'string') {
+      data = Buffer.from(data)
+    }
+
+    if (!oldKey && key.length < data.length) {
+      throw new Error('Data is bigger than key. Consider using a longer key or stretching it!')
+    }
+
+    var output = Buffer.alloc(data.length)
+
+    for (var i = 0; i < data.length; ++i) {
+      output[i] = oldKey ? data[i] ^ key : data[i] ^ key[i]
+    }
+
+    return oldKey ? String(output) : output
   }
 }))
